@@ -10,19 +10,20 @@
    	&	http://archives.seul.org/linuxgames/Aug-1999/msg00107.html
    	Date:	October 30, 2017
    	Purpose:
-   		- Uses simple logic to       	
+   		- Uses simple linux Joystick functions to read values from controller.
+   		- Simple logic to return value necessary for robot movements
+   		- Basic movements are controlled from return ranges from 1 to 9
+   		- Servo Motor works from a toggling method from pressing an assigned button     	
 
  */
+
 /* TO COMPILE ON LINUX
-gcc -o Joystick Joystick.c -lm
-
-BEFORE USING JOYSTICK:
-Make sure that the switch on the tail end of the controller is set ‘D’
-Test to make sure values are being received
-Ensure that “MODE” light is off
-
+	gcc -o Joystick Joystick.c -lm
+	BEFORE USING JOYSTICK:
+	Make sure that the switch on the tail end of the controller is set ‘D’
+	Test to make sure values are being received
+	Ensure that “MODE” light is off
 */
-
 
 #include <math.h>
 #include <stdio.h>
@@ -64,16 +65,13 @@ int main()
 	ioctl( joy_fd, JSIOCGNAME(80), &name_of_joystick );
 
 	axis = (int *) calloc( num_of_axis, sizeof( int ) );
-
-	// this calloc isn't needed anymore but "Segmentation fault (core dumped)"
-	// is printed when commented out.
 	button = (char *) calloc( num_of_buttons, sizeof( char ) );	
-
+/*
 	printf("Joystick detected: %s\n\t%d axis\n\t%d buttons\n\n"
 		, name_of_joystick
 		, num_of_axis
 		, num_of_buttons );
-
+*/
 	fcntl( joy_fd, F_SETFL, O_NONBLOCK );	/* use non-blocking mode */
 
 	while( 1 ) 	/* infinite loop */
@@ -122,22 +120,62 @@ int main()
 					printf("tiltDown");
 					//return 6;
 				}
+				else if (button[0] == 1){
+					printf("ToggleServo");
+					//return 7;
+				}	
+				
 
 				break;
 
 		}
 
-			/* print the results */
+		/* PRINT THE RESULTS */
+
 		// Left Joystick
-		printf( "X: %6d  Y: %6d  ", axis[0], axis[1] );
+		//printf( "X: %6d  Y: %6d  ", axis[0], axis[1] );
 		
+
+		/* Servo Motor Angles Using Right Joystick */
 		double val = 180 / PI;
-		double ret = atan2((double)axis[0], (double)axis[1]) * val;
-		printf("HERE LOOK HERE %1f degrees", ret);	
+		double ret = atan2((double)axis[2], (double)axis[3]) * val;
+		if(ret > 90 && ret <= 95){
+			printf("10 Degrees ");
+		}
+		else if(ret > 95 && ret <= 112.5){
+			printf("30 Degrees ");
+		}
+		else if(ret > 112.5 && ret <= 135){
+			printf("50 Degrees ");
+		}
+		else if(ret > 135 && ret <= 157.5){
+			printf("70 Degrees ");
+		}
+		else if(ret > 157.5 && ret <= 180.54){
+			printf("90 Degrees ");
+		}
+		else if( ret < -157.5 && ret >= -178.818127){
+			printf("90 Degrees");
+		}
+
+
+		else if(ret < -95 && ret >= -112.5){
+			printf("150 Degrees ");
+		}
+		else if(ret < -112.5 && ret >= -135){
+			printf("130 Degrees ");
+		}
+		else if(ret < -135 && ret >= -157.5){
+			printf("110 Degrees ");
+		}
+		else if(ret < -90 && ret >= -95){
+			printf("170 Degrees ");		
+		}
+		//printf("HERE LOOK HERE %1f degrees", ret);	
 		//while ((axis[1] < "0") || (axis[1] > '0')){
 			
 		//}
-
+/*
 		//	Left trigger
 		if( num_of_axis > 2 )
 			printf("Z: %6d  ", axis[2] );
@@ -149,7 +187,7 @@ int main()
 		for( x=0 ; x<num_of_buttons ; ++x )
 			printf("B%d: %d  ", x, button[x] );
 		
-
+*/
 		// Carriage Return: repeats the loop until the user has pressed the Return key.	
 		printf("  \r");	
 		fflush(stdout);
