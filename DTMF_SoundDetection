@@ -1,0 +1,62 @@
+#include <math.h>
+#include <stdlib.h>
+#include <stdio.h>
+#define PI 3.14159265
+#define dirWav "/home/ese/Desktop/TestCode/770.samples"
+
+
+int main(void){
+
+    int numSamples = 8;
+    int TARGET_FREQUENCY = 770;
+    int SAMPLING_RATE = 8000;
+    char* data;
+
+    FILE *ptr;
+
+    int     k,i;
+    float   floatnumSamples;
+    float   omega,sine,cosine,coeff,q0,q1,q2,magnitude,real,imag;
+
+    float   scalingFactor = numSamples / 2.0;
+
+    floatnumSamples = (float) numSamples;
+    k = (int) (0.5 + ((floatnumSamples * TARGET_FREQUENCY) / SAMPLING_RATE));
+    omega = (2.0 * PI * k) / floatnumSamples;
+    sine = sin(omega);
+    cosine = cos(omega);
+    coeff = 2.0 * cosine;
+    q0=0;
+    q1=0;
+    q2=0;
+
+    ptr = fopen(dirWav, "rb");
+    //char str[60];
+    if(ptr != NULL){ 
+        while(fgets(data, 8, ptr)!= NULL){
+              //writing content to stdout 
+            float test = atof(data);
+            double test2 = strtod(data, NULL);
+            printf("Float value is: %f, double value is: %f\n", test, test2);
+            //puts(data);
+            
+        }
+    }
+
+    for(i=0; i<numSamples; i++){
+        q0 = coeff * q1 - q2 + data[i];
+        q2 = q1;
+        q1 = q0;
+    }
+
+    // calculate the real and imaginary results
+    // scaling appropriately
+    real = (q1 - q2 * cosine) / scalingFactor;
+    imag = (q2 * sine) / scalingFactor;
+
+    magnitude = sqrtf(real*real + imag*imag);
+    printf("Magnitude: %f\n", magnitude);
+    //return magnitude;
+    fclose(ptr);
+    return 0;
+}
