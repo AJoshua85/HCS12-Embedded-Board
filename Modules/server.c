@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -26,13 +27,56 @@
 #define BAUDRATE B9600
 #define ERROR 	-1
 #define DEVICE "/dev/ttyUSB0"
-#define FAIL -1
 #define MAX 32
 #define PORT 5550
+#define FAIL -1
+#define SUCCESS 0
 
 //Flags used to tell start and finish of msg
 #define STARTFLAG "<" 
 #define ENDFLAG  ">"
+
+char ImageDetec(char path[])
+{
+	int fdShape;
+	char edges;
+	pid_t pid1;
+
+
+	fdShape = mkfifo("/home/pi/Desktop/ImageDetec/shape",0666);
+	if(fdShape == FAIL)
+	{
+		printf("Error file may already exists\n");
+	}
+	pid1 = fork();
+	if(pid1 == FAIL)
+	{
+		printf("fork failed\n");
+	}
+
+	else if(pid1 == SUCCESS)
+	{//Child
+		execv(path,(char*)NULL);
+	}
+	else
+	{//Parent
+		fdShape = open("/home/pi/Desktop/ImageDetec/shape",O_RDONLY);
+		if(fdShape == FAIL)
+		{
+			printf("Cannot open fifo\n");
+		}
+		else if (fdShape != FAIL)
+		{
+			read(fdShape,&edges,sizeof(char));
+			printf("%c",edges);
+			close(fdShape);
+			remove("/home/pi/Desktop/ImageDetec/shape");
+
+		}
+
+	}
+
+}
 
 
 int openPort(void)
@@ -167,6 +211,11 @@ int main (void){
 				//free(serialOut);
 	  			break;
 	  		}
+			else if(strcmp(buffer, "CS") == 0){
+				ImageDetec("/home/pi/Desktop/ImageDetec/ImageDectec.py");
+				printf("hello\n");
+				//break;
+			}
 
 	  		// write data to client 
 	  		write (client_socket, buffer, strlen(buffer));
@@ -178,10 +227,10 @@ int main (void){
 	  			printf("Exiting Due to Disconnections.\n");
 	  			break;
 	  		}
-
-	  		while(read(mainfd,tbuffer, sizeof(tbuffer)) != "\0"){	// Arish Heartbeat
+/*
+	  		while(read(mainfd,tbuffer, sizeof(tbuffer)) != '\0'){	// Arish Heartbeat
 	  			write(mainfd, "k", 1);
-	  		}
+	  		}*/
 
 	  		memset(serialOut, 0, sizeof(serialOut));
 		}
